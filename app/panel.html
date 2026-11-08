@@ -126,7 +126,7 @@
       <tr>
         <td colspan="6" class="dsa-detail">
           <ul class="dsa-checks">
-            <li><span class="ico">✅</span> package.json：dsh-skill-audit@0.1.0</li>
+            <li><span class="ico">✅</span> package.json：dsh-skill-audit@0.1.1</li>
             <li><span class="ico">✅</span> dsh.bundle：patch: ./cordis.patch.yml</li>
             <li><span class="ico">✅</span> cordis.patch.yml row name：与包名一致（dsh-skill-audit）</li>
             <li><span class="ico">✅</span> client 模块 id：与包名一致（dsh-skill-audit）</li>
@@ -185,7 +185,43 @@
     <span>S ≥ 90 · A ≥ 80 · B ≥ 70 · C ≥ 60 · D &lt; 60</span>
   </div>
 
-  <div class="dsa-foot">dsh-skill-audit v0.1.0 · 扫描范围：~/.dsh/skills · profile node_modules · 工作区 dsh-plugins</div>
+  <hr style="border:none;border-top:1px solid #223049;margin:30px 0 24px" />
+
+  <div class="dsa-head">
+    <div class="dsa-shield" style="background:linear-gradient(140deg,#92400e,#b45309)">📦</div>
+    <h1>WorkBuddy 包审核模式</h1>
+  </div>
+  <div class="dsa-sub" style="margin-left:52px">25 条门禁（G01–G19 / E01–E06）+ 质量分 Q（5 维）+ 价值分 V（6 维）+ 定价建议</div>
+
+  <p class="dsa-note">在 DSH 面板里切到「WorkBuddy 包」，输入技能包 / 专家包的目录或 .zip 绝对路径即可扫描；下面是静态示例数据。</p>
+
+  <div class="dsa-cards">
+    <div class="dsa-card"><div class="k">门禁结论</div><div class="v" style="color:#34d399;font-size:15px">可上架（blocker 0）</div></div>
+    <div class="dsa-card"><div class="k">质量分 Q</div><div class="v">88.3 <small>/ 100</small></div></div>
+    <div class="dsa-card"><div class="k">价值分 V</div><div class="v">78.3 <small>/ 100</small></div></div>
+    <div class="dsa-card"><div class="k">建议价格</div><div class="v">¥29.9 <small>A 级</small></div></div>
+  </div>
+
+  <table class="dsa-table">
+    <thead>
+      <tr><th>ID</th><th>严重度</th><th>状态</th><th>检查项</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>G01</td><td>blocker</td><td style="color:#34d399">PASS</td><td>包结构与上传规则（平铺 / SKILL.md 在根 / 层级≤2）</td></tr>
+      <tr><td>G08</td><td>blocker</td><td style="color:#34d399">PASS</td><td>付费包法律文件齐全（LICENSE-USE / NOTICE / PRIVACY / SECURITY / CHANGELOG）</td></tr>
+      <tr><td>G15</td><td>minor</td><td style="color:#fbbf24">WARN</td><td>文件编码 UTF-8（samples/示例输出.csv 含 BOM）</td></tr>
+      <tr><td>G19</td><td>blocker</td><td style="color:#34d399">PASS</td><td>examples_zh / examples_en 各 ≤3 条</td></tr>
+      <tr><td>E01</td><td>blocker</td><td style="color:#64748b">SKIP</td><td>plugin.json 16 字段（技能包不适用）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="dsa-legend">
+    <span>V_final = min(V_raw, Q + 15)</span>
+    <span>定价带：V ≥85 S ¥49–79 · ≥72 A ¥29.9 · ≥60 B ¥19.9 · ≥48 C ¥9.9 · 其余 D</span>
+    <span>启发式评分，报告内附每条依据</span>
+  </div>
+
+  <div class="dsa-foot">dsh-skill-audit v0.1.1 · 扫描范围：DSH 资产（~/.dsh/skills · profile node_modules · 工作区 dsh-plugins）与 WorkBuddy 包（目录 / .zip）</div>
 </div>
 </body>
 </html>

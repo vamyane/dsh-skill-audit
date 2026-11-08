@@ -4,13 +4,16 @@
  *   - app/panel.html 的 gzip 数据能解开（构建产物完整性）
  *   - __ModuleLoader__.load 的 id 正确、且没有用 iframe
  *   - 两个槽位注册成功、组件可渲染（面板直接 React 渲染，不是 iframe）
- *   - 宿主半边可导入、能注册 /api/dsh-skill-audit/* 路由
+ *   - 面板两种模式（DSH 资产 / WorkBuddy 包）都能渲染出关键入口
+ *   - 宿主半边可导入、能注册 4 条 /api/dsh-skill-audit/* 路由
  */
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
 import zlib from "node:zlib";
 import { VERSION } from "../lib/audit.mjs";
+import { WB_RUBRIC_VERSION } from "../lib/wb-package.mjs";
+import { GATE_DEFS } from "../lib/wb-audit.mjs";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 const root = path.join(here, "..");
@@ -30,10 +33,14 @@ function grab(placeholderName) {
   return match ? match[1] : "";
 }
 
-// --- 0. 版本一致性 ---
+// --- 0. 版本 / rubric 一致性 ---
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 if (pkg.name === "dsh-skill-audit" && pkg.version === VERSION) ok(`package.json 版本与 VERSION 一致（${pkg.version}）`);
 else fail("版本一致性", `${pkg.name}@${pkg.version} vs ${VERSION}`);
+if (WB_RUBRIC_VERSION === "1.0.1") ok("WorkBuddy rubric 版本 1.0.1");
+else fail("rubric 版本", WB_RUBRIC_VERSION);
+if (GATE_DEFS.length === 25) ok(`WorkBuddy 门禁 25 条（G01–G19 / E01–E06）`);
+else fail("门禁数量", String(GATE_DEFS.length));
 
 // --- 1. panel.html 内嵌数据 ---
 const panelB64 = grab("PANEL_GZIP_B64");
@@ -52,7 +59,7 @@ if (!panelB64) {
 }
 
 // --- 2. 客户端不使用 iframe ---
-if (code.includes('"iframe"') || code.includes("'iframe'") || code.includes("createElement(\"iframe")) {
+if (code.includes('"iframe"') || code.includes("'iframe'") || code.includes('createElement("iframe')) {
   fail("面板未使用 iframe", "client.js 里出现 iframe 引用");
 } else {
   ok("面板未使用 iframe（React 直接渲染）");
@@ -79,8 +86,11 @@ function flatten(node, out) {
     return out;
   }
   if (typeof node === "object" && "type" in node) {
-    // 函数组件：冒烟时直接调用一次，把真实渲染树摊平
     if (typeof node.type === "function") return flatten(node.type(node.props || {}), out);
+    const props = node.props || {};
+    for (const key of Object.keys(props)) {
+      if (typeof props[key] === "string") out.push(props[key]);
+    }
     flatten(node.children, out);
   }
   return out;
@@ -173,7 +183,6 @@ try {
     }
   }
 
-  // 打开面板后再渲染一次：验证真实面板树（头顶标题 + 加载态）能渲染出来
   const panelRegistration = registered.find((item) => item.options.name === "shell.overlay");
   if (panelRegistration && mod.__test && typeof mod.__test.setOpen === "function") {
     mod.__test.setOpen(true);
@@ -181,14 +190,39 @@ try {
       const tree = panelRegistration.component({ t: (key) => key, wide: true, cwd: () => "" });
       const texts = flatten(tree, []).join(" | ");
       if (texts.includes("panel.title") && texts.includes("panel.loading")) {
-        ok("打开态面板渲染（标题 + 加载态）");
+        ok("DSH 模式面板渲染（标题 + 加载态）");
       } else {
-        fail("打开态面板渲染", texts.slice(0, 200));
+        fail("DSH 模式面板渲染", texts.slice(0, 200));
       }
       if (texts.includes("panel.refresh") && texts.includes("panel.export")) {
-        ok("面板有「重新扫描 / 导出报告」按钮");
+        ok("DSH 模式有「重新扫描 / 导出报告」按钮");
       } else {
-        fail("面板按钮", texts.slice(0, 200));
+        fail("DSH 模式按钮", texts.slice(0, 200));
+      }
+      if (texts.includes("mode.dsh") && texts.includes("mode.wb")) {
+        ok("面板有「DSH 资产 / WorkBuddy 包」模式切换");
+      } else {
+        fail("模式切换", texts.slice(0, 240));
+      }
+
+      // 切到 WorkBuddy 模式再渲染一次
+      if (typeof mod.__test.setMode === "function") {
+        mod.__test.setMode("wb");
+        const wbTree = panelRegistration.component({ t: (key) => key, wide: true, cwd: () => "" });
+        const wbTexts = flatten(wbTree, []).join(" | ");
+        if (wbTexts.includes("wb.title") && wbTexts.includes("wb.idle") && wbTexts.includes("wb.scan")) {
+          ok("WorkBuddy 模式面板渲染（标题 + 路径输入 + 扫描按钮）");
+        } else {
+          fail("WorkBuddy 模式面板渲染", wbTexts.slice(0, 240));
+        }
+        if (wbTexts.includes("wb.export") && wbTexts.includes("wb.pathPlaceholder")) {
+          ok("WorkBuddy 模式有「导出报告 / 路径输入」");
+        } else {
+          fail("WorkBuddy 模式按钮", wbTexts.slice(0, 240));
+        }
+        mod.__test.setMode("dsh");
+      } else {
+        fail("WorkBuddy 模式渲染", "缺少 __test.setMode 测试钩子");
       }
     } catch (error) {
       fail("打开态面板渲染", error.message);
@@ -223,21 +257,31 @@ try {
   };
   host.apply(fakeCtx);
   const paths = routes.map((route) => route.path).sort();
-  const expected = ["/api/dsh-skill-audit/report", "/api/dsh-skill-audit/scan"];
-  if (JSON.stringify(paths) === JSON.stringify(expected)) ok("宿主注册两条路由（scan / report）");
+  const expected = [
+    "/api/dsh-skill-audit/report",
+    "/api/dsh-skill-audit/scan",
+    "/api/dsh-skill-audit/wb-report",
+    "/api/dsh-skill-audit/wb-scan",
+  ];
+  if (JSON.stringify(paths) === JSON.stringify(expected)) ok("宿主注册 4 条路由（DSH scan/report + WorkBuddy wb-scan/wb-report）");
   else fail("宿主路由", JSON.stringify(paths));
-  const report = routes.find((route) => route.path === "/api/dsh-skill-audit/report");
-  if (report && report.methods && report.methods.includes("POST") && typeof report.fetch === "function") {
-    ok("report 路由为 POST 且带 fetch handler");
-  } else {
-    fail("report 路由定义");
+  for (const routePath of ["/api/dsh-skill-audit/report", "/api/dsh-skill-audit/wb-scan", "/api/dsh-skill-audit/wb-report"]) {
+    const route = routes.find((item) => item.path === routePath);
+    if (route && route.methods && route.methods.includes("POST") && typeof route.fetch === "function") {
+      ok(`${routePath} 为 POST 且带 fetch handler`);
+    } else {
+      fail(`${routePath} 路由定义`);
+    }
   }
 } catch (error) {
   fail("宿主半边导入", error.message);
 }
 
 // --- 5. 打包文件清单一致性 ---
-const requiredFiles = ["lib/index.js", "lib/client.js", "lib/audit.mjs", "app/panel.html", "assets/icon.png", "README.md", "README.zh.md", "LICENSE", "cordis.patch.yml"];
+const requiredFiles = [
+  "lib/index.js", "lib/client.js", "lib/audit.mjs", "lib/wb-package.mjs", "lib/wb-audit.mjs",
+  "app/panel.html", "assets/icon.png", "README.md", "README.zh.md", "LICENSE", "cordis.patch.yml",
+];
 const missingFiles = requiredFiles.filter((item) => !(pkg.files || []).includes(item));
 if (missingFiles.length === 0) ok("package.json files 覆盖必要文件");
 else fail("package.json files", `缺少 ${missingFiles.join("、")}`);

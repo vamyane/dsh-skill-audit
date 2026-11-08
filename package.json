@@ -1,7 +1,7 @@
 {
   "name": "dsh-skill-audit",
-  "version": "0.1.0",
-  "description": "Skill and plugin audit console for DeepSeek Harness: scan installed skills and DSH plugins, score each asset 0-100 (S/A/B/C/D), list pass/warn/fail checks with fix hints, and export a Markdown report.",
+  "version": "0.1.1",
+  "description": "Skill and plugin audit console for DeepSeek Harness: scan DSH skills/plugins (0-100 + S/A/B/C/D) and audit WorkBuddy skill/expert packages with 25 gate checks, quality Q, value V and pricing suggestions, then export a Markdown report.",
   "type": "module",
   "main": "lib/index.js",
   "author": "dsh-skill-audit contributors",
@@ -27,6 +27,8 @@
   "files": [
     "lib/index.js",
     "lib/audit.mjs",
+    "lib/wb-package.mjs",
+    "lib/wb-audit.mjs",
     "lib/client.js",
     "lib/client.template.js",
     "app/panel.html",
@@ -39,12 +41,15 @@
     "tools/scan.mjs",
     "tools/make-icon.py",
     "test/smoke.mjs",
-    "test/scan.test.mjs"
+    "test/scan.test.mjs",
+    "test/wb.test.mjs"
   ],
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/smoke.mjs && node test/scan.test.mjs",
+    "test": "node test/smoke.mjs && node test/scan.test.mjs && node test/wb.test.mjs",
+    "test:wb": "node test/wb.test.mjs",
     "scan": "node tools/scan.mjs",
+    "scan:wb": "node tools/scan.mjs --wb",
     "pack:check": "npm pack --dry-run"
   },
   "keywords": [
@@ -58,7 +63,11 @@
     "audit",
     "scanner",
     "report",
-    "quality"
+    "quality",
+    "workbuddy",
+    "gate",
+    "rubric",
+    "pricing"
   ],
   "engines": {
     "node": ">=20",
