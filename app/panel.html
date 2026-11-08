@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DSH 技能 / 插件审核台 · 静态预览</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #101a2e;
+    --panel-2: #0d1526;
+    --line: #223049;
+    --text: #e6e9f2;
+    --muted: #8b93a7;
+    --accent: #38bdf8;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --gold: #f5c542;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 20% -10%, #12233f 0%, var(--bg) 55%);
+    color: var(--text);
+    font: 14px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+  .dsa-wrap { max-width: 1080px; margin: 0 auto; }
+  .dsa-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .dsa-shield {
+    width: 40px; height: 40px; border-radius: 12px; flex: none;
+    display: grid; place-items: center; font-size: 21px;
+    background: linear-gradient(140deg, #0e7490, #1d4ed8);
+    box-shadow: 0 6px 18px rgba(29, 78, 216, .35);
+  }
+  h1 { font-size: 19px; margin: 0; letter-spacing: .2px; }
+  .dsa-sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 22px 52px; }
+  .dsa-note {
+    border: 1px solid #274060; background: rgba(56, 189, 248, .08);
+    color: #bfe4ff; border-radius: 10px; padding: 9px 12px; font-size: 12.5px;
+    margin: 0 0 20px;
+  }
+  .dsa-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .dsa-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .dsa-card .k { color: var(--muted); font-size: 12px; }
+  .dsa-card .v { font-size: 22px; font-weight: 650; margin-top: 2px; }
+  .dsa-card .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .dsa-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .dsa-table th, .dsa-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .dsa-table th { color: var(--muted); font-weight: 500; background: var(--panel-2); font-size: 12px; }
+  .dsa-table tr:last-child td { border-bottom: none; }
+  .dsa-table tr.dsa-open-row td { background: #0a1424; }
+  .dsa-name { font-weight: 600; }
+  .dsa-path { color: var(--muted); font-size: 11.5px; word-break: break-all; }
+  .dsa-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid transparent; }
+  .dsa-badge.skill { color: #a5b4fc; border-color: #3730a3; background: rgba(99,102,241,.12); }
+  .dsa-badge.plugin { color: #93c5fd; border-color: #1d4ed8; background: rgba(59,130,246,.12); }
+  .dsa-grade { font-weight: 700; }
+  .dsa-grade.S { color: var(--gold); }
+  .dsa-grade.A { color: var(--ok); }
+  .dsa-grade.B { color: var(--accent); }
+  .dsa-grade.C { color: var(--warn); }
+  .dsa-grade.D { color: var(--bad); }
+  .dsa-score { font-variant-numeric: tabular-nums; }
+  .dsa-issues .bad { color: var(--bad); }
+  .dsa-issues .warn { color: var(--warn); }
+  .dsa-detail td { padding: 0; }
+  .dsa-checks { margin: 0; padding: 10px 14px 14px 34px; background: #091222; }
+  .dsa-checks li { margin: 7px 0; list-style: none; position: relative; }
+  .dsa-checks li .ico { position: absolute; left: -22px; }
+  .dsa-checks .hint { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .dsa-legend { display: flex; gap: 16px; color: var(--muted); font-size: 12px; margin: 18px 2px 0; flex-wrap: wrap; }
+  .dsa-foot { color: #5f6b82; font-size: 11.5px; margin-top: 30px; text-align: center; }
+  .dsa-btnrow { display: flex; gap: 8px; margin-left: auto; }
+  .dsa-btn {
+    background: transparent; color: #b8c4da; border: 1px solid #2e3d59; border-radius: 8px;
+    padding: 5px 11px; font-size: 12.5px; cursor: default; font-family: inherit;
+  }
+  .dsa-btn.primary { background: #123a63; border-color: #1d5f9c; color: #d7ecff; }
+</style>
+</head>
+<body>
+<div class="dsa-wrap" data-dsh-skill-audit-panel="preview">
+  <div class="dsa-head">
+    <div class="dsa-shield">🛡️</div>
+    <h1>技能 / 插件审核台</h1>
+    <div class="dsa-btnrow">
+      <button class="dsa-btn primary" type="button">↻ 重新扫描</button>
+      <button class="dsa-btn" type="button">⬇ 导出报告</button>
+      <button class="dsa-btn" type="button">✕ 关闭</button>
+    </div>
+  </div>
+  <div class="dsa-sub">dsh-skill-audit · 静态预览页（DSH 面板内为 React 实时渲染，数据来自 /api/dsh-skill-audit/scan）</div>
+
+  <p class="dsa-note">这是构建时内嵌进 client.js 的静态预览页，只有示例数据、按钮不可用；真实面板在 DSH 侧栏点开，会自动扫描本机并支持导出 Markdown 报告。</p>
+
+  <div class="dsa-cards">
+    <div class="dsa-card"><div class="k">资产总数</div><div class="v">4</div></div>
+    <div class="dsa-card"><div class="k">平均分</div><div class="v">86.5 <small>/ 100</small></div></div>
+    <div class="dsa-card"><div class="k">等级分布</div><div class="v">S 1 · A 2 · B 0 · C 1 <small>D 0</small></div></div>
+    <div class="dsa-card"><div class="k">待修问题</div><div class="v"><span class="bad">❌ 2</span> · <span class="warn">⚠️ 4</span></div></div>
+  </div>
+
+  <table class="dsa-table">
+    <thead>
+      <tr>
+        <th>名称</th>
+        <th>类型</th>
+        <th>来源</th>
+        <th>分数</th>
+        <th>等级</th>
+        <th>问题</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="dsa-open-row">
+        <td><div class="dsa-name">dsh-skill-audit</div><div class="dsa-path">…/dsh-plugins/dsh-skill-audit</div></td>
+        <td><span class="dsa-badge plugin">插件</span></td>
+        <td>工作区</td>
+        <td class="dsa-score">100</td>
+        <td class="dsa-grade S">S</td>
+        <td class="dsa-issues"><span class="bad">❌ 0</span> · <span class="warn">⚠️ 0</span></td>
+      </tr>
+      <tr>
+        <td colspan="6" class="dsa-detail">
+          <ul class="dsa-checks">
+            <li><span class="ico">✅</span> package.json：dsh-skill-audit@0.1.0</li>
+            <li><span class="ico">✅</span> dsh.bundle：patch: ./cordis.patch.yml</li>
+            <li><span class="ico">✅</span> cordis.patch.yml row name：与包名一致（dsh-skill-audit）</li>
+            <li><span class="ico">✅</span> client 模块 id：与包名一致（dsh-skill-audit）</li>
+            <li><span class="ico">✅</span> 宿主 name：与包名一致（dsh-skill-audit）</li>
+            <li><span class="ico">✅</span> icon 512×512：512×512 PNG（38.2 KB）</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><div class="dsa-name">dsh-pet</div><div class="dsa-path">~/.dsh/profiles/desktop/node_modules/dsh-pet</div></td>
+        <td><span class="dsa-badge plugin">插件</span></td>
+        <td>profile</td>
+        <td class="dsa-score">88</td>
+        <td class="dsa-grade A">A</td>
+        <td class="dsa-issues"><span class="bad">❌ 0</span> · <span class="warn">⚠️ 2</span></td>
+      </tr>
+      <tr>
+        <td><div class="dsa-name">ai-brain</div><div class="dsa-path">~/.dsh/skills/ai-brain</div></td>
+        <td><span class="dsa-badge skill">技能</span></td>
+        <td>~/.dsh/skills</td>
+        <td class="dsa-score">85</td>
+        <td class="dsa-grade A">A</td>
+        <td class="dsa-issues"><span class="bad">❌ 0</span> · <span class="warn">⚠️ 3</span></td>
+      </tr>
+      <tr>
+        <td colspan="6" class="dsa-detail">
+          <ul class="dsa-checks">
+            <li><span class="ico">✅</span> SKILL.md：已找到 SKILL.md（6.1 KB）</li>
+            <li><span class="ico">✅</span> frontmatter description：description 142 字</li>
+            <li><span class="ico">⚠️</span> frontmatter author：frontmatter 缺 author
+              <div class="hint">建议：补 author 字段（开源可写 GitHub 用户名 / 组织名）。</div>
+            </li>
+            <li><span class="ico">⚠️</span> LICENSE：缺少 LICENSE 文件
+              <div class="hint">建议：加 LICENSE（开源常用 MIT / Apache-2.0）。</div>
+            </li>
+            <li><span class="ico">⚠️</span> 本机路径 / 隐私：发现 4 处本机绝对路径（用户名已隐藏）</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><div class="dsa-name">broken-skill</div><div class="dsa-path">~/.dsh/skills/broken-skill</div></td>
+        <td><span class="dsa-badge skill">技能</span></td>
+        <td>~/.dsh/skills</td>
+        <td class="dsa-score">55</td>
+        <td class="dsa-grade C">C</td>
+        <td class="dsa-issues"><span class="bad">❌ 2</span> · <span class="warn">⚠️ 2</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="dsa-legend">
+    <span>✅ pass</span>
+    <span>⚠️ warn（0.5 分）</span>
+    <span>❌ fail（0 分）</span>
+    <span>➖ skip（不计分）</span>
+    <span>S ≥ 90 · A ≥ 80 · B ≥ 70 · C ≥ 60 · D &lt; 60</span>
+  </div>
+
+  <div class="dsa-foot">dsh-skill-audit v0.1.0 · 扫描范围：~/.dsh/skills · profile node_modules · 工作区 dsh-plugins</div>
+</div>
+</body>
+</html>

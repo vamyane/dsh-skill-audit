@@ -1,0 +1,7 @@
+# dsh-skill-audit 组合补丁层：随插件包分发，安装后自动挂载。
+# 宿主半边（lib/index.js）注册 /api/dsh-skill-audit/scan 与 /report 两条路由；
+# 浏览器半边（lib/client.js）注册左侧栏入口 + 全屏 React 面板。
+# 注意：row 的 name 必须等于包名 dsh-skill-audit，否则运行时按 id/name 解析插件会失败。
+- insert:
+    - id: skill-audit
+      name: dsh-skill-audit

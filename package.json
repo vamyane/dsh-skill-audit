@@ -1,0 +1,70 @@
+{
+  "name": "dsh-skill-audit",
+  "version": "0.1.0",
+  "description": "Skill and plugin audit console for DeepSeek Harness: scan installed skills and DSH plugins, score each asset 0-100 (S/A/B/C/D), list pass/warn/fail checks with fix hints, and export a Markdown report.",
+  "type": "module",
+  "main": "lib/index.js",
+  "author": "dsh-skill-audit contributors",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/audit.mjs",
+    "lib/client.js",
+    "lib/client.template.js",
+    "app/panel.html",
+    "assets/icon.png",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "cordis.patch.yml",
+    "build.mjs",
+    "tools/scan.mjs",
+    "tools/make-icon.py",
+    "test/smoke.mjs",
+    "test/scan.test.mjs"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/smoke.mjs && node test/scan.test.mjs",
+    "scan": "node tools/scan.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "dsh-plugin",
+    "dsh-plugin-panel",
+    "skill",
+    "skills",
+    "audit",
+    "scanner",
+    "report",
+    "quality"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0-rc.2 <0.3.0-0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.0 <5"
+  }
+}
